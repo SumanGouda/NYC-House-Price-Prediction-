@@ -1,0 +1,123 @@
+# Import Modules
+
+# Check for any duplicate values
+
+# In the for loop logic i checked if the percentage of missing values in a feature column is less then 10, if it is then i dropped those rows to keep it simple.
+
+# Checked for numerical and categorical feature columns 
+
+# Found two categorical feature columns 
+
+# Converted those  two features into numerical one.
+
+# Why i did not use One-Hot Encoding (OHE)
+
+One-Hot Encoding converts a categorical variable into multiple binary columns (0 or 1).
+
+| borough_y | Manhattan | Brooklyn | Queens |
+| --------- | --------- | -------- | ------ |
+| Manhattan | 1         | 0        | 0      |
+| Brooklyn  | 0         | 1        | 0      |
+
+Although OHE is commonly used, it has several drawbacks in this case:
+
+Sparsity Problem
+OHE creates many columns where most values are 0 and only a few are 1. This makes the dataset sparse and increases dimensionality unnecessarily.
+
+Loss of Information
+OHE only indicates category membership. It does not capture the relationship between the category and the target variable (sale_price).
+
+Poor Signal for Linear Models
+Linear models work better when features have a continuous numerical relationship with the target.
+OHE produces binary (0,1) features, which may not capture price differences effectively.
+
+Because of these limitations, i used target encoding (mean encoding) instead.
+
+# Initial Approach: Simple Mean Encoding
+
+I first calculated the average sale price for each borough:
+
+variation = df.groupby('borough_y')['sale_price'].mean()
+df['borough_mean_price'] = df['borough_y'].map(variation)
+
+This converts the categorical feature into a meaningful numerical value.
+
+Example:
+
+borough_y	mean sale_price
+Manhattan	2100000
+Brooklyn	1500000
+Queens	980000
+
+Now the feature represents economic information about each borough, which is useful for price prediction.
+
+Problem with Simple Mean Encoding
+
+However, this approach has a limitation.
+
+Different categories may have different numbers of observations.
+
+Example:
+
+borough	houses	mean price
+Manhattan	3000	2,100,000
+Small area	3	3,000,000
+
+The small category has only 3 samples, so its mean price is unstable and unreliable.
+
+This problem is called:
+
+High variance in small groups
+
+A linear model may wrongly assume that the small category is extremely expensive simply because of a few samples.
+
+Solution: Smoothed Target Encoding
+
+To make the encoding more reliable, I used smoothing.
+
+The idea is to combine the group mean with the global mean of the dataset.
+
+Formula:
+
+        Encoded value = (group_mean*Count + global_mean*k) / (count + k) 
+    
+    Where:
+
+        group_mean = average price of the category
+
+        count = number of observations in that category
+
+        global_mean = overall average sale price in the dataset
+
+        k = smoothing parameter (controls how much we trust small groups)
+
+Benefits of This Method
+
+    Reduces noise from categories with very small sample sizes
+
+    Encodes meaningful price information into the feature
+
+    Produces continuous numerical features, which work better with linear regression
+
+    Avoids the sparsity problem caused by one-hot encoding
+
+# Created a standard scaler function
+    > Applied log transformation over the right skewed data and then applied the standard scaling
+    > Standardization (Standard Scaler) and normalization are used to bring features to a similar scale so 
+    that no single feature dominates the model just because it has larger numerical values. 
+    Many machine learning algorithms, especially linear regression, gradient descent-based models, and distance-based models, 
+    perform better when the input features are on comparable scales. 
+    Scaling also improves numerical stability and helps the model converge faster during training. By standardizing or normalizing the data,
+    we ensure that each feature contributes more fairly to the learning process.
+
+# Multiple_linear_regression (It is my own regression model):
+    where in training the model draws a best fit plane (multidimension) such that the cost fuunction is minimum.
+    Then it stores the parameter of that plane.
+    In predict it uses those prameter and the input as a feature input and predicts the Y_hat which lies over the plane for those particular inputs 
+
+
+# Still the model performance (r2_score) 1- ((TSS) / (RSS)),
+  Because i think the input parameter is very less so the model did not find the relation, and the correlation is not that strong for a linear model to train over this data.
+
+# Thank You
+    
